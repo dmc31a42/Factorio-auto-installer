@@ -5,6 +5,6 @@
 # example
 rm -r -f /opt/factorio*
 rm -r -f /opt/glibc*
-rm -r -f /opt/glibc*
+rm -r -f /tmp/glibc*
 ```
 * run this script and follow structure
