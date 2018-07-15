@@ -1,0 +1,66 @@
+#!/bin/bash
+# set -x
+# check permission
+if [ $UID -ne 0 ]
+then
+echo "please check administrator(root) permission"
+exit -1
+fi
+# glibc-2.18 설치
+echo 'install glibc-2.18'
+yum groupinstall -y "Development tools"
+yum install -y glibc-devel.i686 glibc.i686
+yum install -y wget
+cd /tmp
+wget http://ftp.gnu.org/gnu/glibc/glibc-2.18.tar.gz
+tar xvzf glibc-2.18.tar.gz
+cd glibc-2.18
+mkdir glibc-build
+cd glibc-build
+../configure --prefix='/opt/glibc-2.18'
+sed -i 's/(\/\$ld_so_name\/)/(\/\\Q\$ld_so_name\\E\/)/' ../scripts/test-installation.pl
+make
+make install
+
+# factorio download and install
+echo 'install factorio using factorio-init'
+useradd factorio
+# mkdir /opt/factorio/
+# chown -R factorio:factorio /opt/factorio
+# factorio-init download and install
+yum install -y git curl
+cd '/opt'
+git clone https://github.com/Bisa/factorio-init.git
+cp /opt/factorio-init/config.example /opt/factorio-init/config
+echo "should edit /opt/factorio-init/config"
+while [ "KEY$input" != "KEYY" ]
+do
+	echo -n "After that type Y (case sensitive) and press enter :"
+	read input
+done
+/opt/factorio-init/factorio install
+
+# setup service, systemctl
+echo 'setting service factorio command, and systemctl start|stop|status|enable factorio'
+cp /opt/factorio-init/factorio.service.example /etc/systemd/system/factorio.service
+systemctl daemon-reload
+ln -s /opt/factorio-init/factorio /etc/init.d/factorio
+chmod +x /opt/factorio-init/factorio
+service factorio help
+
+# factorio-update download and install
+echo 'installing factorio-updater'
+cd /opt/
+git clone https://github.com/narc0tiq/factorio-updater.git
+
+# copy configure file
+echo 'copy configure file'
+cp /opt/factorio/data/server-settings.example.json /opt/factorio/data/server-settings.json
+# set firewall exception  port
+echo 'make 34197 port firewall exception rull'
+firewall-cmd --permanent --zone=public --add-port=34197/udp
+firewall-cmd --reload
+echo 'Installation complete.
+edit /opt/factorio/data/server-settings.json,
+and start your server using "service factorio start|stop|status|help
+for auto-startup, run "systemctl enable factorio"'
